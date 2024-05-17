@@ -1,0 +1,26 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: message-service
+  data:
+    mongodb:
+      uri: mongodb://root:root@localhost:27016/message?authSource=admin
+
+  kafka:
+    host: localhost
+    port: 9092
+    group: message
+
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+
