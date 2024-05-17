@@ -7,10 +7,11 @@ import java.util.UUID;
 
 @Data
 public class ChatMessageDto {
-    private long groupId;
-    private int type;
-    private long userId;
+    private Integer groupId;
+    private Integer channelId;
+    private Integer type;
+    private Long userId;
     private String content;
-    private LocalDateTime localDateTime;
+    private LocalDateTime createdAt;
     private UUID uuid;
 }
