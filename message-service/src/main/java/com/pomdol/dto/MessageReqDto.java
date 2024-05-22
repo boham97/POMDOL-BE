@@ -1,7 +1,6 @@
 package com.pomdol.dto;
 
 import com.pomdol.entity.Message;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.domain.Page;
@@ -14,13 +13,13 @@ import java.util.stream.Collectors;
 
 @Builder
 @Data
-public class MessageDto {
+public class MessageReqDto {
     private Integer groupId;
     private Integer channelId;
     private Integer type;
     private Integer userId;
     private String content;
-    private Timestamp createdAt;
+    private LocalDateTime createdAt;
     private UUID uuid;
 
     public Message messageBuilder(){
@@ -30,12 +29,7 @@ public class MessageDto {
                 .type(this.getType())
                 .userId(this.getUserId())
                 .content(this.getContent())
-                .createdAt(this.getCreatedAt().toLocalDateTime())
+                .createdAt(this.getCreatedAt())
                 .build();
-    }
-    public List<MessageDto> pageToList(Page<Message> messagePage){
-        return messagePage.getContent().stream()
-                .map(Message::messageDtoBuilder)
-                .collect(Collectors.toList());
     }
 }
