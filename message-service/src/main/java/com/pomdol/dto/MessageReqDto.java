@@ -1,11 +1,17 @@
 package com.pomdol.dto;
 
 import com.pomdol.entity.Message;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.domain.Page;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 @Builder
 @Data
 public class MessageDto {
@@ -24,7 +30,12 @@ public class MessageDto {
                 .type(this.getType())
                 .userId(this.getUserId())
                 .content(this.getContent())
-                .createdAt(this.getCreatedAt())
+                .createdAt(this.getCreatedAt().toLocalDateTime())
                 .build();
+    }
+    public List<MessageDto> pageToList(Page<Message> messagePage){
+        return messagePage.getContent().stream()
+                .map(Message::messageDtoBuilder)
+                .collect(Collectors.toList());
     }
 }
