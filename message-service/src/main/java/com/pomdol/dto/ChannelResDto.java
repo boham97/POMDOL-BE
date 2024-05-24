@@ -7,10 +7,10 @@ import java.util.List;
 @Builder
 @Data
 public class ChannelResDto {
-    private List<MessageResDto> messageResDtoList;
+    private Integer totalPage;
     private Integer maxSize;
-    public ChannelResDto(List<MessageResDto> messageResDtoList, Integer maxSize){
-        this.messageResDtoList = messageResDtoList;
+    public ChannelResDto(Integer totalPage, Integer maxSize){
+        this.totalPage = totalPage;
         this.maxSize = maxSize;
     }
 }

@@ -70,13 +70,10 @@ public class MessageService {
                     channelReqDto.getChannelId(),
                     pageable
             );
-            pageable = PageRequest.of(messagePage.getTotalPages() - 1, 20, Sort.by("createdAt", "ASC"));
-            List<MessageResDto> messageResDtoList = messageRepository.findByGroupIdAndChannelId(channelReqDto.getGroupId(),
-                    channelReqDto.getChannelId(),
-                    pageable).stream()
-                    .map(Message::messageDtoBuilder)
-                    .collect(Collectors.toList());
-            kafkaProducer.simpleMessageSend("group", objectMapper.writeValueAsString(new ChannelResDto(messageResDtoList, messagePage.getTotalPages())));
+            kafkaProducer.simpleMessageSend("group", objectMapper.writeValueAsString(new ChannelResDto(
+                    pageable.getPageNumber(),
+                    messagePage.getTotalPages()
+            )));
         }catch (JsonProcessingException ex){
             log.error("objectMapper error message uuid: {}", jsonMessage);
             ex.printStackTrace();
