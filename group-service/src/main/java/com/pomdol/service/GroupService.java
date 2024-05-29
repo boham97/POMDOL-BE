@@ -7,6 +7,7 @@ import com.pomdol.dto.channel.ChannelResDto;
 import com.pomdol.dto.channel.ChannelUpdateReqDto;
 import com.pomdol.dto.group.GroupCreateReqDto;
 import com.pomdol.dto.group.GroupCreateResDto;
+import com.pomdol.dto.group.GroupUpdateReqDto;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -19,8 +20,8 @@ public interface GroupService {
     ResponseEntity<String> deleteChannel(Integer groupId, Integer channelId, Integer userId);
     ResponseEntity<String> inviteUser(Integer groupId, Integer targetId, Integer userId);
     ResponseEntity<String> updateChannel(ChannelUpdateReqDto channelUpdateReqDto, Integer groupId, Integer channelId);
-    ResponseEntity<GroupCreateResDto> updateGroup(GroupCreateReqDto groupCreateReqDto, Integer userId);
-    ResponseEntity updateLeader(Integer targetId, Integer userId);
-    ResponseEntity deleteGroupUser(Integer GroupId, Integer targetId, Integer userId);
+    ResponseEntity<GroupCreateResDto> updateGroup(GroupUpdateReqDto groupUpdateReqDto, Integer groupId);
+    ResponseEntity<String> updateLeader(Integer groupId, Integer targetId, Integer userId);
+    ResponseEntity<String> deleteGroupUser(Integer groupId, Integer targetId, Integer userId);
 
 }

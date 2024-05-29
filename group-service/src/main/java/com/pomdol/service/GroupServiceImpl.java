@@ -10,6 +10,7 @@ import com.pomdol.dto.channel.ChannelResDto;
 import com.pomdol.dto.channel.ChannelUpdateReqDto;
 import com.pomdol.dto.group.GroupCreateReqDto;
 import com.pomdol.dto.group.GroupCreateResDto;
+import com.pomdol.dto.group.GroupUpdateReqDto;
 import com.pomdol.exception.CustomException;
 import com.pomdol.exception.ErrorCode;
 import com.pomdol.repository.ChannelRepository;
@@ -104,6 +105,11 @@ public class GroupServiceImpl implements GroupService{
         Group group = groupRepository.findByIdFetchGroupUser(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
         if (!group.getLeaderId().equals(userId)){ throw new CustomException((ErrorCode.NOT_GROUP_LEADER));}
         if (group.getSize() >= group.getMaxSize()){ throw new CustomException((ErrorCode.GROUP_FULL_SIZE));}
+        if (group.getGroupUserList().stream()
+                        .anyMatch(groupUser -> groupUser.getUserId().equals(targetId) &&
+                                !groupUser.getIsDeleted())){
+            throw new CustomException(ErrorCode.GROUP_USER_ALREADY_JOINED);
+        }
         group.setSize(group.getSize() + 1);
         groupRepository.save(group);
         groupUserRepository.save(GroupUser.builder()
@@ -121,6 +127,7 @@ public class GroupServiceImpl implements GroupService{
         Group group = groupRepository.findByIdFetchChannelList(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
         if (!group.getLeaderId().equals(channelUpdateReqDto.getUserId())){ throw new CustomException((ErrorCode.NOT_GROUP_LEADER));}
         if (channelUpdateReqDto.getName().length() > 30){ throw new CustomException((ErrorCode.CHANNEL_TOO_LONG));}
+
         Channel channel = group.getChannelList().stream()
                 .filter(channelEntity -> channelEntity.getId().equals(channelId))
                 .findFirst()
@@ -133,17 +140,51 @@ public class GroupServiceImpl implements GroupService{
     }
     @Transactional
     @Override
-    public ResponseEntity<GroupCreateResDto> updateGroup(GroupCreateReqDto groupCreateReqDto, Integer userId) {
-        return null;
+    public ResponseEntity<GroupCreateResDto> updateGroup(GroupUpdateReqDto groupUpdateReqDto, Integer groupId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
+        if (!group.getLeaderId().equals(groupUpdateReqDto.getUserId())){ throw new CustomException((ErrorCode.NOT_GROUP_LEADER));}
+        if (groupUpdateReqDto.getName().length() > 30){throw new CustomException(ErrorCode.NAME_TOO_LONG);}
+        if (!groupUpdateReqDto.getIsPublic() && groupUpdateReqDto.getPassword().isEmpty()){throw new CustomException(ErrorCode.PRIVATE_NEED_PASSWORD);}
+        if (groupUpdateReqDto.getProfile().getContentType() != null &&
+                !(groupUpdateReqDto.getProfile().getContentType().equals("image/jpeg") ||
+                        groupUpdateReqDto.getProfile().getContentType().equals("image/png"))){
+            log.info("media type: {}", groupUpdateReqDto.getProfile().getContentType());
+            throw new CustomException(ErrorCode.NOT_SUPPORTED_MEDIA_TYPE);}
+        if (groupUpdateReqDto.getProfile().getSize() > 100000){ throw new CustomException(ErrorCode.IMAGE_TO_LARGE);}
+
+        group = groupRepository.save(
+                groupUpdateReqDto.dtoToEntity(
+                        groupCategoryRepository.findById(groupUpdateReqDto.getCategory()).orElseThrow(
+                                () ->new CustomException(ErrorCode.CATEGORY_NOT_FOUND
+                                )), group));
+        return ResponseEntity.status(201).body(group.entityToDto());
     }
     @Transactional
     @Override
-    public ResponseEntity updateLeader(Integer targetId, Integer userId) {
-        return null;
+    public ResponseEntity<String> updateLeader(Integer groupId, Integer targetId, Integer userId) {
+        if (targetId.equals(userId)) throw new CustomException(ErrorCode.CANT_DO_IT_YOURSELF);
+        Group group = groupRepository.findByIdFetchGroupUser(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
+        if (!group.getLeaderId().equals(userId)){ throw new CustomException((ErrorCode.NOT_GROUP_LEADER));}
+        group.getGroupUserList().stream()
+                .filter(groupUser1 -> groupUser1.getUserId().equals(targetId) && !groupUser1.getIsDeleted())
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.GROUP_USER_NOT_FOUND));
+        group.setLeaderId(targetId);
+        groupRepository.save(group);
+        return ResponseEntity.status(201).body("강퇴 성공");
     }
     @Transactional
     @Override
-    public ResponseEntity deleteGroupUser(Integer GroupId, Integer targetId, Integer userId) {
-        return null;
+    public ResponseEntity<String> deleteGroupUser(Integer groupId, Integer targetId, Integer userId) {
+        if (targetId.equals(userId)) throw new CustomException(ErrorCode.CANT_DO_IT_YOURSELF);
+        Group group = groupRepository.findByIdFetchGroupUser(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
+        if (!group.getLeaderId().equals(userId)){ throw new CustomException((ErrorCode.NOT_GROUP_LEADER));}
+        GroupUser groupUser = group.getGroupUserList().stream()
+                .filter(groupUser1 -> groupUser1.getUserId().equals(targetId) && !groupUser1.getIsDeleted())
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.GROUP_USER_NOT_FOUND));
+        groupUser.setIsDeleted(true);
+        groupUserRepository.save(groupUser);
+        return ResponseEntity.status(201).body("강퇴 성공");
     }
 }

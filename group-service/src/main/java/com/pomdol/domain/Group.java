@@ -19,8 +19,7 @@ public class Group {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "group_id")
     private Integer id;
-    @Column(nullable = false,
-            length = 30, name="group_name")
+    @Column(nullable = false, length = 30, name="group_name")
     private String name;
     private Boolean isPublic;
     @Column(length = 30)
