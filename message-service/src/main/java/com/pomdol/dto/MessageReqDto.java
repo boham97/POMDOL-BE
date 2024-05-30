@@ -1,8 +1,10 @@
 package com.pomdol.dto;
 
 import com.pomdol.entity.Message;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
 import java.sql.Timestamp;
@@ -12,6 +14,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class MessageReqDto {
     private Integer groupId;

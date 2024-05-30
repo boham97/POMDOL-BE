@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8083
   shutdown: graceful
 
 spring:
@@ -8,7 +8,6 @@ spring:
   data:
     mongodb:
       uri: mongodb://root:root@localhost:27016/message?authSource=admin
-
   kafka:
     host: localhost
     port: 9092
