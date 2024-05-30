@@ -23,5 +23,5 @@ public interface GroupService {
     ResponseEntity<GroupCreateResDto> updateGroup(GroupUpdateReqDto groupUpdateReqDto, Integer groupId);
     ResponseEntity<String> updateLeader(Integer groupId, Integer targetId, Integer userId);
     ResponseEntity<String> deleteGroupUser(Integer groupId, Integer targetId, Integer userId);
-
+    ResponseEntity<String> exitGroup(Integer groupId, Integer userId);
 }

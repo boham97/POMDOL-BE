@@ -24,14 +24,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 
 @Slf4j
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 @Service
 public class GroupServiceImpl implements GroupService{
     private final GroupRepository groupRepository;
@@ -61,7 +63,7 @@ public class GroupServiceImpl implements GroupService{
                 .build());
         return ResponseEntity.status(201).body(group.entityToDto());
     }
-
+    @Transactional(readOnly = true)
     @Override
     public ResponseEntity<List<CategoryResDto>> getCategory() {
         return ResponseEntity
@@ -70,7 +72,6 @@ public class GroupServiceImpl implements GroupService{
                         .map(GroupCategory::toDto)
                         .collect(Collectors.toList()));
     }
-    @Transactional
     @Override
     public ResponseEntity<ChannelResDto> createChannel(ChannelCreateReqDto channelCreateReqDto, Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
@@ -80,7 +81,6 @@ public class GroupServiceImpl implements GroupService{
                 .status(201)
                 .body(channelRepository.save(channelCreateReqDto.toEntity(group)).toDto());
     }
-    @Transactional
     @Override
     public ResponseEntity<String> deleteGroup(Integer groupId, Integer userId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
@@ -90,7 +90,6 @@ public class GroupServiceImpl implements GroupService{
                 .status(204)
                 .body("삭제 성공");
     }
-    @Transactional
     @Override
     public ResponseEntity<String> deleteChannel(Integer groupId, Integer channelId, Integer userId) {
         Channel channel = channelRepository.findByGroupIdAndChannelIdAndUserId(groupId, channelId, userId).orElseThrow(() -> new CustomException(ErrorCode.NOT_GROUP_LEADER));
@@ -99,7 +98,6 @@ public class GroupServiceImpl implements GroupService{
                 .status(204)
                 .body("삭제 성공");
     }
-    @Transactional
     @Override
     public ResponseEntity<String> inviteUser(Integer groupId, Integer targetId, Integer userId) {
         Group group = groupRepository.findByIdFetchGroupUser(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
@@ -121,7 +119,6 @@ public class GroupServiceImpl implements GroupService{
                 .status(204)
                 .body("초대 성공");
     }
-    @Transactional
     @Override
     public ResponseEntity<String> updateChannel(ChannelUpdateReqDto channelUpdateReqDto, Integer groupId, Integer channelId) {
         Group group = groupRepository.findByIdFetchChannelList(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
@@ -138,7 +135,6 @@ public class GroupServiceImpl implements GroupService{
                 .status(204)
                 .body("수정 성공");
     }
-    @Transactional
     @Override
     public ResponseEntity<GroupCreateResDto> updateGroup(GroupUpdateReqDto groupUpdateReqDto, Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
@@ -159,7 +155,6 @@ public class GroupServiceImpl implements GroupService{
                                 )), group));
         return ResponseEntity.status(201).body(group.entityToDto());
     }
-    @Transactional
     @Override
     public ResponseEntity<String> updateLeader(Integer groupId, Integer targetId, Integer userId) {
         if (targetId.equals(userId)) throw new CustomException(ErrorCode.CANT_DO_IT_YOURSELF);
@@ -170,10 +165,8 @@ public class GroupServiceImpl implements GroupService{
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.GROUP_USER_NOT_FOUND));
         group.setLeaderId(targetId);
-        groupRepository.save(group);
         return ResponseEntity.status(201).body("강퇴 성공");
     }
-    @Transactional
     @Override
     public ResponseEntity<String> deleteGroupUser(Integer groupId, Integer targetId, Integer userId) {
         if (targetId.equals(userId)) throw new CustomException(ErrorCode.CANT_DO_IT_YOURSELF);
@@ -185,6 +178,31 @@ public class GroupServiceImpl implements GroupService{
                 .orElseThrow(() -> new CustomException(ErrorCode.GROUP_USER_NOT_FOUND));
         groupUser.setIsDeleted(true);
         groupUserRepository.save(groupUser);
+        group.setSize(group.getSize() - 1);
+        groupRepository.save(group);
         return ResponseEntity.status(201).body("강퇴 성공");
+    }
+
+    @Override
+    public ResponseEntity<String> exitGroup(Integer groupId, Integer userId) {
+        Group group = groupRepository.findByIdFetchGroupUser(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
+        if (!group.getLeaderId().equals(userId)){ throw new CustomException((ErrorCode.NOT_GROUP_LEADER));}
+        if (group.getLeaderId().equals(userId)){
+            Optional<GroupUser> nextLeader = group.getGroupUserList().stream()
+                    .filter(groupUser -> groupUser.getUserId().equals(userId) && !groupUser.getIsDeleted())
+                    .min(Comparator.comparing(GroupUser::getCreatedAt));
+            if(nextLeader.isPresent()){
+                group.setLeaderId(nextLeader.get().getUserId());
+            }
+        }
+        GroupUser groupUser = group.getGroupUserList().stream()
+                .filter(groupUser1 -> groupUser1.getUserId().equals(userId) && !groupUser1.getIsDeleted())
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.GROUP_USER_NOT_FOUND));
+        groupUser.setIsDeleted(true);
+        groupUserRepository.save(groupUser);
+        group.setSize(group.getSize() - 1);
+        groupRepository.save(group);
+        return ResponseEntity.status(201).body("그룹 나가기 성공");
     }
 }
