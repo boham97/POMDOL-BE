@@ -19,7 +19,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/chat")
-                .setAllowedOrigins("http://localhost:8082") //로드 밸런서 주소로 바꾸기
+                .setAllowedOrigins("http://localhost:8081") //로드 밸런서 주소로 바꾸기
                 .withSockJS();
     }
 
