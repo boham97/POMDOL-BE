@@ -1,6 +1,5 @@
 package com.pomdol.service;
 
-import com.pomdol.domain.Channel;
 import com.pomdol.dto.*;
 import com.pomdol.dto.channel.ChannelCreateReqDto;
 import com.pomdol.dto.channel.ChannelResDto;
@@ -24,4 +23,6 @@ public interface GroupService {
     ResponseEntity<String> updateLeader(Integer groupId, Integer targetId, Integer userId);
     ResponseEntity<String> deleteGroupUser(Integer groupId, Integer targetId, Integer userId);
     ResponseEntity<String> exitGroup(Integer groupId, Integer userId);
+    ResponseEntity<List<GroupCreateResDto>> getGroupList(Integer userId);
+    ResponseEntity<List<ChannelResDto>> getChannelList(Integer groupId, Integer userId);
 }

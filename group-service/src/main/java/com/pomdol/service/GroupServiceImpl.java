@@ -24,9 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -187,14 +185,10 @@ public class GroupServiceImpl implements GroupService{
     public ResponseEntity<String> exitGroup(Integer groupId, Integer userId) {
         Group group = groupRepository.findByIdFetchGroupUser(groupId).orElseThrow(() ->new CustomException(ErrorCode.GROUP_NOT_FOUND));
         if (!group.getLeaderId().equals(userId)){ throw new CustomException((ErrorCode.NOT_GROUP_LEADER));}
-        if (group.getLeaderId().equals(userId)){
-            Optional<GroupUser> nextLeader = group.getGroupUserList().stream()
-                    .filter(groupUser -> groupUser.getUserId().equals(userId) && !groupUser.getIsDeleted())
-                    .min(Comparator.comparing(GroupUser::getCreatedAt));
-            if(nextLeader.isPresent()){
-                group.setLeaderId(nextLeader.get().getUserId());
-            }
-        }
+        Optional<GroupUser> nextLeader = group.getGroupUserList().stream()
+                .filter(groupUser -> groupUser.getUserId().equals(userId) && !groupUser.getIsDeleted())
+                .min(Comparator.comparing(GroupUser::getCreatedAt));
+        nextLeader.ifPresent(groupUser -> group.setLeaderId(groupUser.getUserId()));
         GroupUser groupUser = group.getGroupUserList().stream()
                 .filter(groupUser1 -> groupUser1.getUserId().equals(userId) && !groupUser1.getIsDeleted())
                 .findFirst()
@@ -204,5 +198,30 @@ public class GroupServiceImpl implements GroupService{
         group.setSize(group.getSize() - 1);
         groupRepository.save(group);
         return ResponseEntity.status(201).body("그룹 나가기 성공");
+    }
+    @Override
+    public ResponseEntity<List<GroupCreateResDto>> getGroupList(Integer userId) {
+        return ResponseEntity.status(200)
+                .body(groupUserRepository.findByUserIdFetchGroup(userId)
+                        .stream()
+                        .map(groupUser -> groupUser.getGroup().entityToDto())
+                        .collect(Collectors.toList()));
+    }
+
+    @Override
+    public ResponseEntity<List<ChannelResDto>> getChannelList(Integer groupId, Integer userId) {
+        Group group = groupRepository.findByIdFetchGroupUserAndChannelList(groupId).orElseThrow(() -> new CustomException(ErrorCode.GROUP_NOT_FOUND));
+        group.getGroupUserList().stream()
+                .filter(groupUser -> groupUser.getUserId().equals(userId) && !groupUser.getIsDeleted())
+                .findFirst()
+                .ifPresentOrElse(
+                        groupUser -> {log.info("{}가 {}번 그룹 조회", userId, groupId);},
+                        () -> {throw new CustomException(ErrorCode.GROUP_USER_NOT_FOUND);}
+                );
+        return ResponseEntity.status(200)
+                .body(group.getChannelList()
+                        .stream()
+                        .map(channel -> channel.toDto())
+                        .collect(Collectors.toList()));
     }
 }
