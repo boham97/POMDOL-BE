@@ -215,13 +215,13 @@ public class GroupServiceImpl implements GroupService{
                 .filter(groupUser -> groupUser.getUserId().equals(userId) && !groupUser.getIsDeleted())
                 .findFirst()
                 .ifPresentOrElse(
-                        groupUser -> {log.info("{}가 {}번 그룹 조회", userId, groupId);},
+                        groupUser -> log.info("{}가 {}번 그룹 조회", userId, groupId),
                         () -> {throw new CustomException(ErrorCode.GROUP_USER_NOT_FOUND);}
                 );
         return ResponseEntity.status(200)
                 .body(group.getChannelList()
                         .stream()
-                        .map(channel -> channel.toDto())
+                        .map(Channel::toDto)
                         .collect(Collectors.toList()));
     }
 }
