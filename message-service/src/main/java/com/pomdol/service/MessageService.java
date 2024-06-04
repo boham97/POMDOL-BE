@@ -44,6 +44,19 @@ public class MessageService {
             ex.printStackTrace();
         }
     }
+    @Transactional
+    public void receiveAndSaveSaga(String jsonMessage){
+        try {
+            MessageReqDto messageReqDto = objectMapper.readValue(jsonMessage, MessageReqDto.class);
+            log.info("message tracking uuid: {}", messageReqDto.getUuid());
+            messageReqDto.setCreatedAt(LocalDateTime.now());
+            messageRepository.save(messageReqDto.messageBuilder());
+            kafkaProducer.messageSend("sub", messageReqDto);
+        }catch (JsonProcessingException ex){
+            kafkaProducer.simpleMessageSend("group_rollback", jsonMessage);
+            ex.printStackTrace();
+        }
+    }
     public void receive(String jsonMessage){
         try {
             MessageReqDto messageReqDto = objectMapper.readValue(jsonMessage, MessageReqDto.class);

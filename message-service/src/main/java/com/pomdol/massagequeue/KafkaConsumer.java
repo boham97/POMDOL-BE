@@ -21,12 +21,9 @@ public class KafkaConsumer {
     //그룹변화 전파
     @KafkaListener(topics = "group")
     public void groupEvent(String jsonMessage){
-        messageService.receive(jsonMessage);
+        messageService.receiveAndSaveSaga(jsonMessage);
     }
-    @KafkaListener(topics = "leaveGroup")
-    public void leaveGroupEvent(String jsonMessage){
-        messageService.receiveAndSave(jsonMessage);
-    }
+
     //유저 프로필 변화 채팅으로 전파
     //메세지는 저장X
     @KafkaListener(topics = "profile")
