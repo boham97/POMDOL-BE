@@ -2,8 +2,8 @@ package com.pomdol.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pomdol.dto.ChannelReqDto;
-import com.pomdol.dto.ChannelResDto;
+import com.pomdol.dto.GroupReqDto;
+import com.pomdol.dto.GroupResDto;
 import com.pomdol.dto.MessageReqDto;
 import com.pomdol.dto.MessageResDto;
 import com.pomdol.entity.Message;
@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,29 +55,21 @@ public class MessageService {
         }
     }
 
-    public List<MessageResDto> getBeforeMessage(int groupId, int channelId, Pageable pageable) {
-        return messageRepository.findByGroupIdAndChannelId(groupId, channelId, pageable).getContent()
+    public List<MessageResDto> getBeforeMessage(int groupId, Pageable pageable) {
+        return messageRepository.findByGroupId(groupId, pageable).getContent()
                 .stream()
                 .map(Message::messageDtoBuilder)
                 .collect(Collectors.toList());
     }
 
-    public void channelConnect(String jsonMessage) {
-        try {
-            ChannelReqDto channelReqDto = objectMapper.readValue(jsonMessage, ChannelReqDto.class);
-            log.info("message tracking uuid: {}", channelReqDto.getUuid());
-            Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt", "ASC"));
-            Page<Message> messagePage = messageRepository.findByGroupIdAndChannelId(channelReqDto.getGroupId(),
-                    channelReqDto.getChannelId(),
-                    pageable
-            );
-            kafkaProducer.simpleMessageSend("group", objectMapper.writeValueAsString(new ChannelResDto(
-                    pageable.getPageNumber(),
-                    messagePage.getTotalPages()
-            )));
-        }catch (JsonProcessingException ex){
-            log.error("objectMapper error message uuid: {}", jsonMessage);
-            ex.printStackTrace();
-        }
+    public ResponseEntity<GroupResDto> channelConnect(GroupReqDto groupReqDto) {
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt", "ASC"));
+        Page<Message> messagePage = messageRepository.findByGroupId(groupReqDto.getGroupId(),
+                pageable);
+        return ResponseEntity.ok()
+                .body(new GroupResDto(
+                        pageable.getPageNumber(),
+                        messagePage.getTotalPages())
+                );
     }
 }

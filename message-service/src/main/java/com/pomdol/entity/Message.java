@@ -17,7 +17,6 @@ public class Message {
     @Id
     private String messageId;
     private Integer groupId;
-    private Integer channelId;
     private Integer type;
     private Integer userId;
     private String content;

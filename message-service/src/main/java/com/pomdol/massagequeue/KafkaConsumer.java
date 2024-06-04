@@ -33,7 +33,4 @@ public class KafkaConsumer {
     public void profileEvent(String jsonMessage){
         messageService.receive(jsonMessage);
     }
-    //채널 접속시 최신 메세지 요청
-    @KafkaListener(topics = "channelConnect")
-    public void channelConnect(String jsonMessage){ messageService.channelConnect(jsonMessage);}
 }

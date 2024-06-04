@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface MessageRepository extends MongoRepository<Message, String> {
-    Page<Message> findByGroupIdAndChannelId(Integer groupId, Integer channelId, Pageable pageable);
+    Page<Message> findByGroupId(Integer groupId, Pageable pageable);
 }

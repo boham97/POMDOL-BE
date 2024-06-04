@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 @Data
 public class MessageReqDto {
     private Integer groupId;
-    private Integer channelId;
     private Integer type;
     private Integer userId;
     private String content;
@@ -29,7 +28,6 @@ public class MessageReqDto {
     public Message messageBuilder(){
         return Message.builder()
                 .groupId(this.getGroupId())
-                .channelId(this.getChannelId())
                 .type(this.getType())
                 .userId(this.getUserId())
                 .content(this.getContent())
