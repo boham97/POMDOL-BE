@@ -40,11 +40,6 @@ public class Group {
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)
     private List<GroupUser> groupUserList;
-    @OneToMany(mappedBy = "group",
-            orphanRemoval = true,
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY)
-    private List<Channel> channelList;
 
     public GroupCreateResDto entityToDto(){
         return new GroupCreateResDto(
