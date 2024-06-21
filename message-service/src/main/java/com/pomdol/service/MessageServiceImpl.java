@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Service
-public class MessageService {
+public class MessageServiceImpl {
     private final ObjectMapper objectMapper;
     private final KafkaProducer kafkaProducer;
     private final MessageRepository messageRepository;
